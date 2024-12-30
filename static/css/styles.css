@@ -1,0 +1,133 @@
+/* Allgemeine Einstellungen */
+html,
+body {
+  height: 100%; /* Für Flexbox "sticky footer" */
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f9;
+  color: #333;
+}
+
+/* Hauptcontainer */
+.container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 500px;
+  text-align: center;
+}
+
+/* Überschriften */
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Features und About-Abstand */
+#features,
+#about {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  height: 100px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  resize: none;
+}
+
+/* Buttons */
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+button i {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.btn-success {
+  background: #28a745;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-light {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  color: #333;
+  transition: background 0.3s ease;
+}
+
+.btn-light:hover {
+  background: #e2e6ea;
+  color: #000;
+}
+
+/* Alerts */
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+/* Ladeanimation */
+#loading {
+  position: absolute;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Footer */
+footer {
+  background: #343a40;
+  color: #fff;
+  padding: 1rem 0;
+  text-align: center;
+}

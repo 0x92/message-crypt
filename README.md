@@ -1,5 +1,8 @@
 # Self-Destructing Messages inspired by Privnote
 
+![image](https://github.com/user-attachments/assets/b7c37353-8f27-4933-874e-38877df06fc9)
+
+
 This is a Flask-based web application that allows users to encrypt messages and generate a unique link to share them. Once the link is accessed, the message self-destructs and cannot be viewed again.
 
 ## Features

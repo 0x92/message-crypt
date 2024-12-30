@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, abort
+from flask import Flask, request, render_template, abort, url_for
 from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 import uuid
+import random
+import string
 import threading
 import os
 
@@ -26,18 +28,24 @@ storage_lock = threading.Lock()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    encryption_info = "We use Fernet encryption (AES-256) for your messages, ensuring secure and strong protection."
+    return render_template('index.html', encryption_info=encryption_info)
 
 @app.route('/encrypt', methods=['POST'])
 def encrypt_message():
     data = request.form
     message = data.get('message')
+    expiration_minutes = int(data.get('expiration_time', 30))  # Default to 30 minutes
 
     if not message:
         return render_template('index.html', error="No message provided.")
 
     if len(message) > 1000:
         return render_template('index.html', error="Message is too long. Maximum 1000 characters allowed.")
+
+    # Verwende das eingegebene Passwort oder lasse es leer
+    password = data.get('password')
+    password_in_url = f"?password={password}" if password else ""
 
     # Encrypt the message
     encrypted_message = cipher_suite.encrypt(message.encode()).decode()
@@ -46,15 +54,19 @@ def encrypt_message():
     message_id = str(uuid.uuid4())
 
     # Set expiration time for the message
-    expiration_time = datetime.utcnow() + timedelta(minutes=30)
+    expiration_time = datetime.utcnow() + timedelta(minutes=expiration_minutes)
 
     # Store the encrypted message and expiration in memory
     with storage_lock:
-        storage[message_id] = {"encrypted_message": encrypted_message, "expires_at": expiration_time}
+        storage[message_id] = {
+            "encrypted_message": encrypted_message,
+            "expires_at": expiration_time
+        }
 
     # Generate a link to retrieve the message
-    link = url_for('decrypt_message', message_id=message_id, _external=True)
-    return render_template('index.html', link=link)
+    link = url_for('decrypt_message', message_id=message_id, _external=True) + password_in_url
+    expiration_seconds = expiration_minutes * 60  # Convert to seconds for the timer
+    return render_template('index.html', link=link, password=password if password else None, expiration_time=expiration_seconds)
 
 @app.route('/decrypt/<message_id>', methods=['GET', 'POST'])
 def decrypt_message(message_id):

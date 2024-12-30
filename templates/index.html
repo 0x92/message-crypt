@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Encrypt Message</title>
   <!-- Bootstrap CSS -->
   <link
@@ -14,31 +14,35 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     rel="stylesheet"
   />
-  <!-- Deine eigene CSS-Datei (optional) -->
+  <!-- Custom CSS (optional) -->
   <link href="styles.css" rel="stylesheet" />
 </head>
 <body class="d-flex flex-column min-vh-100">
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <a class="navbar-brand" href="#"><i class="fas fa-shield-alt"></i> Secure Notes</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-      </div>
+        <a class="navbar-brand" href="/"><i class="fas fa-shield-alt"></i> Secure Notes</a>
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+            </ul>
+        </div>
     </div>
-  </nav>
-
-  <!-- Features Section mit 50px Abstand zur Navbar -->
+</nav>
+  <!-- Features Section -->
   <div id="features" class="container" style="margin-top: 50px;">
     <h2 class="text-center mb-4">Why Choose Secure Notes?</h2>
     <div class="row text-center">
@@ -54,35 +58,59 @@
       </div>
       <div class="col-md-4">
         <i class="fas fa-lock fa-3x mb-3"></i>
-        <h4>Strong Encryption</h4>
-        <p>Your messages are encrypted using advanced algorithms.</p>
+        <h4>Multi-Layer Encryption</h4>
+        <p>Your messages are encrypted using AES-256 for strong protection.</p>
       </div>
     </div>
   </div>
 
-  <!-- Main Content (zentriert) -->
+  <!-- Main Content -->
   <main class="flex-fill d-flex align-items-center justify-content-center">
-    <!-- Card mit größerer Breite (max-width: 700px) und min-height -->
     <div class="card p-4 shadow-sm text-center" style="max-width: 700px; width: 100%; min-height: 300px;">
       <h1 class="text-center mb-4">
         <i class="fas fa-lock"></i> Encrypt a Message
       </h1>
       {% if link %}
         <div class="alert alert-success text-center" role="alert">
-          <p class="mb-2">Your encrypted message link:</p>
-          <a href="{{ link }}" target="_blank" class="btn btn-primary mb-2">
-            {{ link }}
-          </a>
-          <button
-            class="btn btn-secondary mb-4"
-            onclick="copyToClipboard('{{ link }}')"
-          >
-            <i class="fas fa-copy"></i> Copy Link
-          </button>
-        </div>
+            <p class="mb-2">Your encrypted message link:</p>
+            <a href="{{ link }}" target="_blank" class="btn btn-primary mb-2">
+                {{ link }}
+            </a>
+            <button
+                class="btn btn-secondary mb-4"
+                onclick="copyToClipboard('{{ link }}')"
+            >
+                <i class="fas fa-copy"></i> Copy Link
+            </button>
+            {% if password %}
+            <div class="alert alert-warning mt-3">
+                <strong>Generated Password:</strong> <span id="generatedPassword">{{ password }}</span>
+            </div>
+            {% endif %}
+            <div class="mt-2">
+                <p><strong>Message expires in:</strong> <span id="timer">Calculating...</span></p>
+            </div>
+    </div>
         <a href="/" class="btn btn-light w-100">
           <i class="fas fa-plus"></i> Create Another Secret Note
         </a>
+        <script>
+        // Timer Script
+        let expirationTime = {{ expiration_time }}; // Zeit in Sekunden vom Server
+        const timerElement = document.getElementById('timer');
+        if (timerElement) {
+            const interval = setInterval(() => {
+                const minutes = Math.floor(expirationTime / 60);
+                const seconds = expirationTime % 60;
+                timerElement.textContent = `${minutes}m ${seconds}s`;
+                expirationTime--;
+                if (expirationTime < 0) {
+                    clearInterval(interval);
+                    timerElement.textContent = "Expired";
+                }
+            }, 1000);
+        }
+        </script>
       {% else %}
         {% if error %}
           <div class="alert alert-danger" role="alert">{{ error }}</div>
@@ -97,6 +125,32 @@
               required
             ></textarea>
           </div>
+          <div class="mb-3 d-flex align-items-center">
+            <input
+              type="text"
+              class="form-control"
+              name="password"
+              id="passwordField"
+              placeholder="Optional password for decryption"
+              readonly
+            />
+            <button
+              type="button"
+              class="btn btn-secondary ms-2"
+              onclick="generatePassword()"
+              title="Generate Random Password"
+            >
+              <i class="fas fa-random"></i>
+            </button>
+          </div>
+          <div class="mb-3">
+            <select class="form-control" name="expiration_time">
+              <option value="5">5 Minutes</option>
+              <option value="30" selected>30 Minutes</option>
+              <option value="60">1 Hour</option>
+              <option value="1440">1 Day</option>
+            </select>
+          </div>
           <button type="submit" class="btn btn-success w-100">
             <i class="fas fa-link"></i> Generate Link
           </button>
@@ -109,14 +163,12 @@
   <div id="about" class="container mt-3">
     <h2 class="text-center mb-4">About Secure Notes</h2>
     <p class="text-center">
-      Secure Notes is a free, anonymous service to share secret messages.
-      We believe in privacy and security. Our platform uses end-to-end encryption
-      to protect your data. No logs, no tracking, no hidden fees—just secure
-      communication.
+        Secure Notes is a free, anonymous service to share secret messages.
+        We believe in privacy and security. Our platform uses <strong>Fernet encryption (AES-256)</strong> to protect your data, ensuring strong and reliable protection against unauthorized access.
     </p>
   </div>
 
-  <!-- Footer (Sticky-Footer via Flexbox) -->
+  <!-- Footer -->
   <footer class="bg-dark text-white py-3 mt-3">
     <div class="container text-center">
       <p>&copy; 2024 Secure Notes. All Rights Reserved.</p>
@@ -132,6 +184,17 @@
       navigator.clipboard.writeText(text).then(() => {
         alert('Link copied to clipboard!');
       });
+    }
+
+    function generatePassword() {
+      const length = 12;
+      const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+      let password = "";
+      for (let i = 0, n = charset.length; i < length; ++i) {
+        password += charset.charAt(Math.floor(Math.random() * n));
+      }
+      const passwordField = document.getElementById("passwordField");
+      passwordField.value = password;
     }
   </script>
 </body>

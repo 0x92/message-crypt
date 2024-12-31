@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, abort, url_for
+from flask import Flask, request, render_template, abort, url_for, jsonify
 from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 import uuid
@@ -22,14 +22,93 @@ else:
 
 cipher_suite = Fernet(key)
 
-# Thread-safe in-memory storage for messages
+# Thread-safe in-memory storage for messages and chats
 storage = {}
 storage_lock = threading.Lock()
+
+# Store active chats and their expiration times
+active_chats = {}
+user_mapping = {}  # Map user IPs to Anonymous IDs
 
 @app.route('/')
 def index():
     encryption_info = "We use Fernet encryption (AES-256) for your messages, ensuring secure and strong protection."
     return render_template('index.html', encryption_info=encryption_info)
+
+@app.route('/livechat')
+def livechat():
+    return render_template('livechat.html')
+
+@app.route('/create_chat', methods=['POST'])
+def create_chat():
+    expiration_time = int(request.form.get('expiration_time', 30))  # Default: 30 minutes
+    chat_id = str(uuid.uuid4())
+    expiration = datetime.utcnow() + timedelta(minutes=expiration_time)
+    
+    active_chats[chat_id] = {
+        'messages': [],
+        'expires_at': expiration,
+        'creator': request.remote_addr  # Using IP address as a basic creator identifier
+    }
+
+    chat_link = url_for('chat_room', chat_id=chat_id, _external=True)
+    return render_template('chat_created.html', chat_link=chat_link, expiration_time=expiration_time)
+
+@app.route('/chat/<chat_id>', methods=['GET', 'POST'])
+def chat_room(chat_id):
+    chat = active_chats.get(chat_id)
+
+    if not chat or datetime.utcnow() > chat['expires_at']:
+        return "Chat has expired or does not exist.", 404
+
+    user_ip = request.remote_addr
+    if user_ip not in user_mapping:
+        user_mapping[user_ip] = f"Anonymous{len(user_mapping)}"
+
+    if request.method == 'POST':
+        message = request.json.get('message')
+        if message:
+            chat['messages'].append({
+                'user': user_mapping[user_ip],
+                'message': message,
+                'timestamp': datetime.utcnow()
+            })
+            return jsonify(success=True)
+
+    return render_template('chat_room.html', chat_id=chat_id)
+
+@app.route('/chat/<chat_id>/messages', methods=['GET'])
+def get_messages(chat_id):
+    chat = active_chats.get(chat_id)
+
+    if not chat or datetime.utcnow() > chat['expires_at']:
+        return jsonify(error="Chat has expired or does not exist."), 404
+
+    return jsonify(chat['messages'])
+
+@app.route('/terminate_chat', methods=['POST'])
+def terminate_chat():
+    chat_id = request.form.get('chat_id')
+
+    if not chat_id:
+        return jsonify({"error": "Chat ID is required."}), 400
+
+    chat = active_chats.get(chat_id)
+
+    if not chat:
+        return render_template('chat_terminated.html', success=False, message="Chat not found or already terminated."), 404
+
+    # Only the creator of the chat should be allowed to terminate it
+    chat_creator = chat.get('creator')
+    current_user = request.remote_addr  # Assuming the user's IP address as identifier
+
+    if chat_creator != current_user:
+        return render_template('chat_terminated.html', success=False, message="You are not authorized to terminate this chat."), 403
+
+    # Terminate the chat
+    del active_chats[chat_id]
+
+    return render_template('chat_terminated.html', success=True, message="Chat terminated successfully.")
 
 @app.route('/encrypt', methods=['POST'])
 def encrypt_message():

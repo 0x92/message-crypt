@@ -14,6 +14,10 @@ This is a Flask-based web application that allows users to encrypt messages and 
 - **Self-Destruction**: Links are valid for a single use only.
 - **Responsive Design**: Modern UI with animations and responsive layouts.
 - **Ease of Use**: Generate, share, and view messages effortlessly.
+- **Anonymous Access**: No user registration or personal information required.
+- **Temporary Live Chats**: Create and share chats that self-destruct after a set time.
+- **Password-Protected Messages**: Add an optional password for enhanced security.
+- **Self-Destructing Notes**: Messages are deleted after they are accessed or expire.
 
 ## Getting Started
 
@@ -66,18 +70,19 @@ This is a Flask-based web application that allows users to encrypt messages and 
 
 ## File Structure
 ```
-self_destructing_messages/
-├── static/
-│   ├── css/
-│   │   └── styles.css
-├── templates/
-│   ├── index.html
-│   ├── confirm.html
-│   └── message.html
-├── app.py
-├── requirements.txt
-├── .gitignore
-└── README.md
+secure-notes/
+├── app.py                # Core application logic
+├── templates/            # HTML templates
+│   ├── index.html        # Homepage template
+│   ├── livechat.html     # Live chat page
+│   ├── chatroom.html     # Chatroom interface
+│   ├── message.html      # Message display page
+│   ├── confirm.html      # Confirmation dialog
+│   ├── chat_created.html # Chat creation confirmation page
+├── static/               # Static assets (CSS, JS, etc.)
+├── requirements.txt      # List of dependencies
+├── key.key               # Encryption key (auto-generated)
+└── README.md             # Project documentation
 ```
 
 ## Contributing

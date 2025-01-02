@@ -33,6 +33,9 @@ storage_lock = threading.Lock()
 active_chats = {}
 user_mapping = {}  # Map user IPs to Anonymous IDs
 
+# Neuer globaler Zähler für ALLE jemals erstellten verschlüsselten Nachrichten
+all_time_encrypted_messages = 0
+
 def generate_qr_code(link: str) -> str:
     """
     Erzeugt einen QR-Code (PNG) für den übergebenen Link
@@ -74,10 +77,7 @@ def create_chat():
         'creator': request.remote_addr  # Using IP address as a basic creator identifier
     }
 
-    # Generiere den Chat-Link
     chat_link = url_for('chat_room', chat_id=chat_id, _external=True)
-    
-    # QR-Code für den Chat-Link erzeugen
     chat_qr_code = generate_qr_code(chat_link)
 
     return render_template(
@@ -133,21 +133,21 @@ def terminate_chat():
 
     # Only the creator of the chat should be allowed to terminate it
     chat_creator = chat.get('creator')
-    current_user = request.remote_addr  # Assuming the user's IP address as identifier
+    current_user = request.remote_addr  # Using the user's IP address as identifier
 
     if chat_creator != current_user:
         return render_template('chat_terminated.html', success=False, message="You are not authorized to terminate this chat."), 403
 
-    # Terminate the chat
     del active_chats[chat_id]
-
     return render_template('chat_terminated.html', success=True, message="Chat terminated successfully.")
 
 @app.route('/encrypt', methods=['POST'])
 def encrypt_message():
+    global all_time_encrypted_messages  # Für den Gesamtzähler aller verschlüsselten Nachrichten
+
     data = request.form
     message = data.get('message')
-    expiration_minutes = int(data.get('expiration_time', 30))  # Default to 30 minutes
+    expiration_minutes = int(data.get('expiration_time', 30))  # Default: 30 minutes
 
     if not message:
         return render_template('index.html', error="No message provided.")
@@ -167,16 +167,18 @@ def encrypt_message():
     # Set expiration time for the message
     expiration_time = datetime.utcnow() + timedelta(minutes=expiration_minutes)
 
-    # Store the encrypted message and expiration in memory
+    # Speichere die verschlüsselte Nachricht
     with storage_lock:
         storage[message_id] = {
             "encrypted_message": encrypted_message,
             "expires_at": expiration_time
         }
 
-    # Generate a link to retrieve the message
+    # Erhöhe den globalen Gesamtzähler
+    all_time_encrypted_messages += 1
+
     link = url_for('decrypt_message', message_id=message_id, _external=True) + password_in_url
-    expiration_seconds = expiration_minutes * 60  # Convert to seconds for the timer
+    expiration_seconds = expiration_minutes * 60
 
     # QR-Code für den Decrypt-Link erzeugen
     decrypt_qr_code = generate_qr_code(link)
@@ -212,6 +214,34 @@ def decrypt_message(message_id):
             # Decrypt the message
             decrypted_message = cipher_suite.decrypt(encrypted_message.encode()).decode()
             return render_template('message.html', message=decrypted_message)
+
+# --- ADMIN DASHBOARD ROUTE ---
+@app.route('/admin')
+def admin_dashboard():
+    """
+    Einfaches Beispiel eines Admin-Dashboards mit Statistik.
+    """
+    # Optional: Minimale 'Authentifizierung' über GET-Parameter ?key=secret
+    # In der Realität würdest Du hier ein sicheres Login/Passwort-Verfahren verwenden.
+    admin_key = request.args.get('key')
+    if admin_key != 'secret':
+        return "<h1>Unauthorized</h1><p>Missing or incorrect admin key.</p>", 403
+
+    # Statistikwerte
+    active_chat_count = len(active_chats)
+    total_chat_messages = sum(len(chat['messages']) for chat in active_chats.values())
+
+    # Anzahl der noch im Speicher befindlichen verschlüsselten Nachrichten
+    stored_message_count = len(storage)
+
+    # all_time_encrypted_messages (globaler Zähler)
+    return render_template(
+        'admin_dashboard.html',
+        active_chat_count=active_chat_count,
+        total_chat_messages=total_chat_messages,
+        stored_message_count=stored_message_count,
+        all_time_encrypted_messages=all_time_encrypted_messages
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

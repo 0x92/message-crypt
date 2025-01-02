@@ -12,6 +12,9 @@
 
 ![image](https://github.com/user-attachments/assets/6d351987-5a71-447a-b294-867715d37e1d)
 
+![image](https://github.com/user-attachments/assets/ce98da96-bda8-422d-ae8a-0b9e226e63a9)
+
+
 
 This is a Flask-based web application that allows users to encrypt messages and generate a unique link to share them. Once the link is accessed, the message self-destructs and cannot be viewed again.
 

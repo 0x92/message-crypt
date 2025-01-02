@@ -64,6 +64,15 @@
             <div class="alert alert-success text-center" role="alert">
                 <p class="mb-2">Your temporary chat link is ready:</p>
                 <a href="{{ chat_link }}" target="_blank" class="btn btn-primary mb-3">Open Chat</a>
+                <div class="my-3">
+                    <!-- QR-Code Bild für den Chat-Link -->
+                    <img 
+                        src="data:image/png;base64,{{ chat_qr_code }}" 
+                        alt="Chat QR Code" 
+                        class="img-fluid" 
+                        style="max-width: 200px;"
+                    />
+                </div>
             </div>
             <p class="mb-3">
                 <strong>Note:</strong> This chat link will expire in <strong>{{ expiration_time }}</strong> minutes.

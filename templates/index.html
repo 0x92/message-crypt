@@ -94,9 +94,21 @@
             <div class="mt-2">
                 <p><strong>Message expires in:</strong> <span id="timer">Calculating...</span></p>
             </div>
-    </div>
+
+            <!-- QR-Code für das Decrypt-Link -->
+            {% if decrypt_qr_code %}
+            <div class="my-3">
+              <img 
+                src="data:image/png;base64,{{ decrypt_qr_code }}" 
+                alt="Decrypt QR Code" 
+                style="max-width: 200px;"
+              />
+              <p class="small text-muted">You can share this QR Code as well.</p>
+            </div>
+            {% endif %}
+        </div>
         <a href="/" class="btn btn-light w-100">
-          <i class="fas fa-plus"></i> Create Another Secret Note
+          <i class="fas fa-plus"></i> Create Another Secure Note
         </a>
         <script>
         // Timer Script
@@ -150,8 +162,9 @@
           <div class="mb-3">
             <select class="form-control" name="expiration_time">
               <option value="5">5 Minutes</option>
-              <option value="30" selected>30 Minutes</option>
-              <option value="60">1 Hour</option>
+              <option value="30">30 Minutes</option>
+              <option value="60" selected>1 Hour</option>
+              <option value="720">12 Hours</option>
               <option value="1440">1 Day</option>
             </select>
           </div>

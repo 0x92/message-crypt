@@ -6,6 +6,9 @@ import random
 import string
 import threading
 import os
+import qrcode
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'default-secret-key')
@@ -30,6 +33,26 @@ storage_lock = threading.Lock()
 active_chats = {}
 user_mapping = {}  # Map user IPs to Anonymous IDs
 
+def generate_qr_code(link: str) -> str:
+    """
+    Erzeugt einen QR-Code (PNG) für den übergebenen Link
+    und gibt ihn als Base64-kodierten String zurück.
+    """
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=6,
+        border=4
+    )
+    qr.add_data(link)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    qr_code_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    return qr_code_base64
+
 @app.route('/')
 def index():
     encryption_info = "We use Fernet encryption (AES-256) for your messages, ensuring secure and strong protection."
@@ -51,8 +74,18 @@ def create_chat():
         'creator': request.remote_addr  # Using IP address as a basic creator identifier
     }
 
+    # Generiere den Chat-Link
     chat_link = url_for('chat_room', chat_id=chat_id, _external=True)
-    return render_template('chat_created.html', chat_link=chat_link, expiration_time=expiration_time)
+    
+    # QR-Code für den Chat-Link erzeugen
+    chat_qr_code = generate_qr_code(chat_link)
+
+    return render_template(
+        'chat_created.html',
+        chat_link=chat_link,
+        expiration_time=expiration_time,
+        chat_qr_code=chat_qr_code
+    )
 
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
 def chat_room(chat_id):
@@ -122,7 +155,6 @@ def encrypt_message():
     if len(message) > 1000:
         return render_template('index.html', error="Message is too long. Maximum 1000 characters allowed.")
 
-    # Verwende das eingegebene Passwort oder lasse es leer
     password = data.get('password')
     password_in_url = f"?password={password}" if password else ""
 
@@ -145,7 +177,17 @@ def encrypt_message():
     # Generate a link to retrieve the message
     link = url_for('decrypt_message', message_id=message_id, _external=True) + password_in_url
     expiration_seconds = expiration_minutes * 60  # Convert to seconds for the timer
-    return render_template('index.html', link=link, password=password if password else None, expiration_time=expiration_seconds)
+
+    # QR-Code für den Decrypt-Link erzeugen
+    decrypt_qr_code = generate_qr_code(link)
+
+    return render_template(
+        'index.html',
+        link=link,
+        password=password if password else None,
+        expiration_time=expiration_seconds,
+        decrypt_qr_code=decrypt_qr_code
+    )
 
 @app.route('/decrypt/<message_id>', methods=['GET', 'POST'])
 def decrypt_message(message_id):

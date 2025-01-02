@@ -31,3 +31,5 @@ instance/
 
 # Key file
 key.key
+
+.codegpt
